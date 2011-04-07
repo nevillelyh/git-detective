@@ -3,7 +3,7 @@
 import copy
 import difflib
 import hashlib
-import pprint
+import os
 import sys
 
 import git
@@ -280,6 +280,10 @@ def report():
     print
 
 def main():
+    if len(sys.argv) != 2:
+        print 'Usage: %s [REPO]' % os.path.basename(sys.argv[0])
+        sys.exit(1)
+
     repopath = sys.argv[1]
     repo = git.Repo(repopath)
 
