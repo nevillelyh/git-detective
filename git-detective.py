@@ -16,6 +16,7 @@ line_action = set(('insert', 'delete', 'change'))
 
 action_schema = {
         'commit': 0,
+        'no_msg': 0,
         'insert': 0, 'delete': 0, 'change': 0,
         'create': 0, 'remove': 0, 'rename': 0, 'modify': 0,
         }
@@ -84,7 +85,16 @@ def resolve_diffset(diffset):
             'mod': mod_list,
             }
 
-def replay_action(action, author, path=None, last_author=None, last_path=None):
+def cleanup_message(message):
+    line = message.splitlines()
+    content = []
+    for l in line:
+        if l.strip().startswith('git-svn-id'):
+            continue
+        content.append(l)
+    return '\n'.join(content)
+
+def replay_action(action, author, path=None, last_author=None, last_path=None, message=None):
     global_stat[action] += 1
 
     author_stat.setdefault(author, copy.deepcopy(author_schema))
@@ -100,6 +110,9 @@ def replay_action(action, author, path=None, last_author=None, last_path=None):
 
     if action == 'commit':
         author_stat[author]['global']['commit'] += 1
+        message = cleanup_message(message)
+        if message.strip() == '':
+            author_stat[author]['global']['no_msg'] += 1
     elif action in file_action or action in line_action:
         author_stat[author]['global'][action] += 1
         author_stat[author]['path'][path][action] += 1
@@ -163,7 +176,6 @@ def replay_mod(author, path, a_content, b_content):
 
 def replay_commit(commit, diffset):
     author = unicode(commit.author)
-    message = commit.message.strip()
     print >> sys.stderr, 'commit %s' % unicode(commit)
 
     diff = resolve_diffset(diffset)
@@ -180,7 +192,7 @@ def replay_commit(commit, diffset):
     for d in diff['mod']:
         assert d.a_blob.path == d.b_blob.path
         replay_mod(author, d.b_blob.path, d.a_blob.data_stream.read(), d.b_blob.data_stream.read())
-    replay_action('commit', author)
+    replay_action('commit', author, message=commit.message)
 
 def replay_log(repo):
     prev = None
@@ -204,7 +216,7 @@ def report():
     print '#' * 80
     for author, stat in author_stat.items():
         print 'Author:\t%s\t%s' % (author, stat_summary(stat['global']))
-        print 'Path:\t%d' % len(stat['path'])
+        print 'Author-Path:\t%d' % len(stat['path'])
         for path in stat['path']:
             print '\t%s' % path
             print '\t%s' % stat_summary(stat['path'][path])
@@ -213,7 +225,7 @@ def report():
     print '#' * 80
     for path, stat in path_stat.items():
         print 'Path:\t%s\t%s' % (path, stat_summary(stat['global']))
-        print 'Author:\t%d' % len(stat['author'])
+        print 'Path-Author:\t%d' % len(stat['author'])
         for author in stat['author']:
             print '\t%s' % author
             print '\t%s' % stat_summary(stat['author'][author])
@@ -258,7 +270,7 @@ def report():
     print '# Conflits'
     print '# editor\tauthor\tdelete\tchange\ttotal'
     for c in conflict_list:
-        print '%10s\t%s\t%d\t%d\t%d' % c
+        print '%10s\t%10s\t%d\t%d\t%d' % c
     print
 
     print '#' * 80
