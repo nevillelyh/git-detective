@@ -113,6 +113,7 @@ def replay_action(action, author, path=None, last_author=None, last_path=None, m
         message = cleanup_message(message)
         if message.strip() == '':
             author_stat[author]['global']['no_msg'] += 1
+            global_stat['no_msg'] += 1
     elif action in file_action or action in line_action:
         author_stat[author]['global'][action] += 1
         author_stat[author]['path'][path][action] += 1
