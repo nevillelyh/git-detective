@@ -8,6 +8,7 @@ import sys
 
 import git
 
+
 snapshot = {}
 
 file_action = set(('create', 'remove', 'modify', 'insert'))
@@ -161,9 +162,9 @@ def replay_mod(author, path, a_content, b_content):
     assert [l[1] for l in snapshot[path]] == b
 
 def replay_commit(commit, diffset):
-    author = str(commit.author)
+    author = unicode(commit.author)
     message = commit.message.strip()
-    print >> sys.stderr, 'commit %s' % str(commit)
+    print >> sys.stderr, 'commit %s' % unicode(commit)
 
     diff = resolve_diffset(diffset)
 
@@ -189,7 +190,7 @@ def replay_log(repo):
             replay_commit(curr, diffset)
         else:
             for stage, blob in git.index.base.IndexFile.from_tree(repo, curr.tree).iter_blobs():
-                replay_new(str(curr.author), blob.path, blob.data_stream.read())
+                replay_new(unicode(curr.author), blob.path, blob.data_stream.read())
         prev = curr
 
 def stat_summary(stat):
