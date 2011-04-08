@@ -187,6 +187,9 @@ def replay_log(repo):
         if prev:
             diffset = prev.diff(curr)
             replay_commit(curr, diffset)
+        else:
+            for blob in curr.tree.blobs:
+                replay_new(str(curr.author), blob.path, blob.data_stream.read())
         prev = curr
 
 def stat_summary(stat):
