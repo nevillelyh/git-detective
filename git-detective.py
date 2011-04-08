@@ -188,7 +188,7 @@ def replay_log(repo):
             diffset = prev.diff(curr)
             replay_commit(curr, diffset)
         else:
-            for blob in curr.tree.blobs:
+            for stage, blob in git.index.base.IndexFile.from_tree(repo, curr.tree).iter_blobs():
                 replay_new(str(curr.author), blob.path, blob.data_stream.read())
         prev = curr
 
