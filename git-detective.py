@@ -268,14 +268,14 @@ def report():
     conflict_list.sort(reverse=True, key=lambda x: x[4])
     print '#' * 80
     print '# Conflits'
-    print '# editor\tauthor\tdelete\tchange\ttotal'
+    print '# %10s\t%10s\tdelete\tchange\ttotal' % ('editor', 'author')
     for c in conflict_list:
         print '%10s\t%10s\t%d\t%d\t%d' % c
     print
 
     print '#' * 80
     print '# Conflits made'
-    print '# editor\tdelete\tchange\ttotal\ts_del\ts_chg\ts_total\tp_del\tp_chg\tp_total'
+    print '# %10s\tdelete\tchange\ttotal\ts_del\ts_chg\ts_total\tp_del\tp_chg\tp_total' % 'editor'
     for c in sorted(conflict_made.items(), reverse=True, key=lambda x: x[1]['total']):
         print '%10s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d' % (
                 c[0], c[1]['delete'], c[1]['change'], c[1]['total'],
@@ -286,7 +286,7 @@ def report():
 
     print '#' * 80
     print '# Conflits received'
-    print '# author\tdelete\tchange\ttotal\ts_del\ts_chg\ts_total\tp_del\tp_chg\tp_total'
+    print '# %10s\tdelete\tchange\ttotal\ts_del\ts_chg\ts_total\tp_del\tp_chg\tp_total' % 'author'
     for c in sorted(conflict_recv.items(), reverse=True, key=lambda x: x[1]['total']):
         print '%10s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d' % (
                 c[0], c[1]['delete'], c[1]['change'], c[1]['total'],
