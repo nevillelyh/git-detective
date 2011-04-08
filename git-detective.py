@@ -215,7 +215,7 @@ def report():
 
     print '#' * 80
     for author, stat in author_stat.items():
-        print 'Author:\t%s\t%s' % (author, stat_summary(stat['global']))
+        print 'Author:\t%10s\t%s' % (author, stat_summary(stat['global']))
         print 'Author-Path:\t%d' % len(stat['path'])
         for path in stat['path']:
             print '\t%s' % path
