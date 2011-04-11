@@ -4,10 +4,11 @@ import copy
 import difflib
 import hashlib
 import os
+import re
 import sys
 
 import git
-
+import nltk
 
 snapshot = {}
 
@@ -31,16 +32,28 @@ path_schema = {
         'author': {},
         }
 
+message_schema = {
+        'term': {},
+        'bigram': {},
+        'trigram': {},
+        }
+
 conflict_schema = {
         'delete': 0, 'change': 0, 'total': 0,
         'self_delete': 0, 'self_change': 0, 'self_total': 0,
         'peer_delete': 0, 'peer_change': 0, 'peer_total': 0,
         }
 
+ignore_pattern = ()
+
 global_stat = copy.deepcopy(action_schema)
 author_stat = {}
 path_stat = {}
 conflict_stat = {}
+message_stat = {
+        'global': copy.deepcopy(message_schema),
+        'author': {},
+        }
 
 def hash(string):
     return hashlib.sha1(string).hexdigest()
@@ -94,6 +107,26 @@ def cleanup_message(message):
         content.append(l)
     return '\n'.join(content)
 
+def index_message(author, message):
+    tokenizer = nltk.tokenize.WordPunctTokenizer()
+    message_stat['author'].setdefault(author, copy.deepcopy(message_schema))
+    for l in message.splitlines():
+        for p in ignore_pattern:
+            l = re.sub(p, '', l)
+        tokens = []
+        for t in tokenizer.tokenize(l):
+            if len(t) > 1:
+                tokens.append(t)
+        for t in tokens:
+            message_stat['global']['term'][t] = message_stat['global']['term'].get(t, 0) + 1
+            message_stat['author'][author]['term'][t] = message_stat['author'][author]['term'].get(t, 0) + 1
+        for t in nltk.util.bigrams(tokens):
+            message_stat['global']['bigram'][t] = message_stat['global']['bigram'].get(t, 0) + 1
+            message_stat['author'][author]['bigram'][t] = message_stat['author'][author]['bigram'].get(t, 0) + 1
+        for t in nltk.util.trigrams(tokens):
+            message_stat['global']['trigram'][t] = message_stat['global']['trigram'].get(t, 0) + 1
+            message_stat['author'][author]['trigram'][t] = message_stat['author'][author]['trigram'].get(t, 0) + 1
+
 def replay_action(action, author, path=None, last_author=None, last_path=None, message=None):
     global_stat[action] += 1
 
@@ -114,6 +147,7 @@ def replay_action(action, author, path=None, last_author=None, last_path=None, m
         if message.strip() == '':
             author_stat[author]['global']['no_msg'] += 1
             global_stat['no_msg'] += 1
+        index_message(author, message)
     elif action in file_action or action in line_action:
         author_stat[author]['global'][action] += 1
         author_stat[author]['path'][path][action] += 1
@@ -295,6 +329,25 @@ def report():
                 c[1]['peer_delete'], c[1]['peer_change'], c[1]['peer_total'],
                 )
     print
+
+    print '#' * 80
+    print '# Commit message'
+    print '# Term'
+    print ' '.join(['%s[%d]' % i for i in sorted(message_stat['global']['term'].items(), reverse=True, key=lambda x:x[1])])
+    print '# Bigram'
+    print ' '.join(['"%s"[%d]' % (' '.join(i[0]), i[1]) for i in sorted(message_stat['global']['bigram'].items(), reverse=True, key=lambda x:x[1])])
+    print '# Trigram'
+    print ' '.join(['"%s"[%d]' % (' '.join(i[0]), i[1]) for i in sorted(message_stat['global']['trigram'].items(), reverse=True, key=lambda x:x[1])])
+
+    for author in message_stat['author']:
+        print '#' * 80
+        print '# Commit message by %s' % author
+        print '# Term'
+        print ' '.join(['%s[%d]' % i for i in sorted(message_stat['author'][author]['term'].items(), reverse=True, key=lambda x:x[1])])
+        print '# Bigram'
+        print ' '.join(['"%s"[%d]' % (' '.join(i[0]), i[1]) for i in sorted(message_stat['author'][author]['bigram'].items(), reverse=True, key=lambda x:x[1])])
+        print '# Trigram'
+        print ' '.join(['"%s"[%d]' % (' '.join(i[0]), i[1]) for i in sorted(message_stat['author'][author]['trigram'].items(), reverse=True, key=lambda x:x[1])])
 
 def main():
     if len(sys.argv) != 2:
