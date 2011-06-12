@@ -1,8 +1,6 @@
-Git Detective
-=============
+# Git Detective
 
-Git repository log analysis
----------------------------
+## Git repository log analysis
 
 ### Usage
 
@@ -10,4 +8,4 @@ Git repository log analysis
 
 ### Requirements
 
-- [git-python](http://gitorious.org/git-python) 0.3.0+
+* git-python 0.3.0+ - <http://gitorious.org/git-python>
