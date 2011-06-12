@@ -1,6 +1,8 @@
 # Git Detective
 
-## Git repository log analysis
+## User Guide
+
+Git repository log analysis
 
 ### Usage
 
